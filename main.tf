@@ -1,49 +1,83 @@
-resource "aws_vpc" "my_vpc" {
-  cidr_block       = "10.0.0.0/16"
-  
-
-  tags = {
-    Name = "teja_vpc"
+terraform {
+  required_providers {
+    aws = {
+      source = "hashicorp/aws"
+      version = "5.38.0"
+    }
   }
 }
-resource "aws_subnet" "public" {
-  vpc_id     = aws_vpc.my_vpc.id
-  cidr_block = "10.0.1.0/24"
+
+provider "aws" {
+  # Configuration options
+}
+
+resource "aws_instance" "web" {
+  ami           = var.ami_id
+  instance_type = var.instance_type_id
 
   tags = {
-    Name = "public"
+    Name = "Raviteja.pamidi"
   }
 }
-resource "aws_subnet" "private" {
-  vpc_id     = aws_vpc.my_vpc.id
-  cidr_block = "10.0.85.0/24"
+resource "aws_s3_bucket" "example" {
+  bucket = var.bucket_id
 
+  tags = {
+    Name        = "My bucket"
+    Environment = "Dev"
+  }
+}
+
+resource "aws_vpc" "main" {
+  cidr_block       = var.cidr_block_id
+  instance_tenancy = var.instance_tenancy_id
+
+  tags = {
+    Name = "teja"
+  }
+}
+
+
+data "aws_vpc" "selected" {
+  id = var.vpc_id
+}
+
+resource "aws_subnet" "main3" {
+  vpc_id = var.vpc_id
+  cidr_block = var.cidr_block3
+  tags = {
+    Name = "Private1"
+  }
+} 
+
+resource "aws_subnet" "main1" {
+  vpc_id     = aws_vpc.main.id
+  cidr_block = var.cidr_block1
   tags = {
     Name = "private"
   }
 }
+resource "aws_subnet" "main2" {
+  vpc_id     = aws_vpc.main.id
+  cidr_block = var.cidr_block2
+  tags = {
+    Name = "public"
+  }
+}
 
-resource "aws_internet_gateway" "teja_gw" {
-  vpc_id = aws_vpc.my_vpc.id
+resource "aws_internet_gateway" "gw" {
+  vpc_id = aws_vpc.main.id
 
   tags = {
-    Name = "teja_gw"
+    Name = "teja.IG"
   }
 }
-resource "aws_route_table" "route_table" {
-  vpc_id = aws_vpc.my_vpc.id
+resource "aws_internet_gateway_attachment" "example" {
+  internet_gateway_id = aws_internet_gateway.example.id
+  vpc_id              = aws_vpc.example.id
+}
 
-  route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.teja_gw.id
-  }
-
-     tags = {
-    Name = "teja_route_table"
-  
-  }
+resource "aws_vpc" "example" {
+  cidr_block = var.cidr_block_id
 }
-resource "aws_route_table_association" "subnet_association" {
-  subnet_id      = aws_subnet.public.id
-  route_table_id = aws_route_table.route_table.id
-}
+resource "aws_internet_gateway" "example" {}
