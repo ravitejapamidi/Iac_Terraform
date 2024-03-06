@@ -1,43 +1,49 @@
-resource "aws_s3_bucket" "name"{
-  bucket = "tejapamidi-bucket"
-# created a AWS S3 bucket with name tejapamidi_bucket
+resource "aws_vpc" "my_vpc" {
+  cidr_block       = "10.0.0.0/16"
+  
+
+  tags = {
+    Name = "teja_vpc"
+  }
+}
+resource "aws_subnet" "public" {
+  vpc_id     = aws_vpc.my_vpc.id
+  cidr_block = "10.0.1.0/24"
+
+  tags = {
+    Name = "public"
+  }
+}
+resource "aws_subnet" "private" {
+  vpc_id     = aws_vpc.my_vpc.id
+  cidr_block = "10.0.85.0/24"
+
+  tags = {
+    Name = "private"
+  }
 }
 
-resource "aws_glacier_vault" "my_archive" {
-  name = "tejapamidi-glacier" 
-#   created a S3 glacier valut for back up
-}
-resource "aws_db_instance" "default" {
-  allocated_storage    = 10
-  db_name              = "tejapamidi001"
-  engine               = "mysql"
-  engine_version       = "5.7"
-  instance_class       = "db.t3.micro"
-  username             = "foo"
-  password             = "foobarbaz"
-  parameter_group_name = "default.mysql5.7"
-  skip_final_snapshot  = true
-# created a AWS RDS with mysql
+resource "aws_internet_gateway" "teja_gw" {
+  vpc_id = aws_vpc.my_vpc.id
 
+  tags = {
+    Name = "teja_gw"
+  }
 }
-resource "aws_dynamodb_table" "teja-dynamodb-table" {
-  name           = "tejaScores"
-  billing_mode   = "PROVISIONED"
-  read_capacity  = 20
-  write_capacity = 20
-  hash_key       = "UserId"
-  range_key      = "GameTitle"
+resource "aws_route_table" "route_table" {
+  vpc_id = aws_vpc.my_vpc.id
 
-  attribute {
-    name = "UserId"
-    type = "S"
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.teja_gw.id
   }
 
-  attribute {
-    name = "GameTitle"
-    type = "S"
+     tags = {
+    Name = "teja_route_table"
+  
   }
-# created a no sql database i.e AWS DynamoDB
-
 }
-# this is a sample project of storage services
+resource "aws_route_table_association" "subnet_association" {
+  subnet_id      = aws_subnet.public.id
+  route_table_id = aws_route_table.route_table.id
+}
